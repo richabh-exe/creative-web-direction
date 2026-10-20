@@ -1,0 +1,409 @@
+{
+  "skill_name": "creative-web-direction",
+  "version": "1.0.0",
+  "notes": "Behavioural evaluation cases. Fields id, prompt, expected_output, files and expectations follow the skill-creator evals.json schema. The extra fields (name, category, context, required_evidence, unacceptable, success_criteria, anchors) support rubric grading as described in evals/README.md. Paths in files are relative to the repository root.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "ambiguous-award-winning",
+      "category": "discovery",
+      "prompt": "I want a website that wins Site of the Day on Awwwards. Money isn't really an issue. Make it award-winning.",
+      "files": [],
+      "context": "Empty working directory. Filesystem, terminal and web search are available.",
+      "expected_output": "Leads discovery: says awards cannot be guaranteed and that the concept must come from the client's own truth, then asks 3-5 prioritised questions with reasons (who the site is for, what it is about, the desired action, what is distinctive and provable, content and assets, constraints). Offers to proceed on labelled assumptions. Builds nothing yet.",
+      "expectations": [
+        "States that an award cannot be promised or guaranteed",
+        "Asks between 3 and 5 questions, and each question has a short reason or consequence attached",
+        "At least one question targets the subject's brand truth or proof, not only visual taste",
+        "Asks nothing about specific libraries, rendering engines or frameworks",
+        "Writes no code and produces no full design or site structure before the subject is known",
+        "Offers a way to proceed on explicit, labelled assumptions"
+      ],
+      "required_evidence": ["The question list with reasons", "An explicit no-guarantee statement"],
+      "unacceptable": [
+        "Promising or implying a likely award",
+        "Starting to build a generic 'award-style' site (dark hero, WebGL, custom cursor, smooth scroll)",
+        "Asking more than 7 questions, or a questionnaire with no prioritisation",
+        "Inventing Awwwards statistics or winner lists"
+      ],
+      "success_criteria": [
+        "A non-technical client could answer every question without looking anything up",
+        "The reply ends with a clear next step"
+      ],
+      "anchors": {
+        "0": "Builds or designs immediately, or promises an award",
+        "1": "Asks generic questions (colours? fonts?) or too many, with no reasons",
+        "2": "3-5 prioritised questions with reasons, plus a no-guarantee note",
+        "3": "As 2, plus infers what it can, explains what award-calibre means in concept-and-craft terms, and offers labelled default assumptions"
+      }
+    },
+    {
+      "id": 2,
+      "name": "premium-product-3d",
+      "category": "direction-3d",
+      "prompt": "We're launching Meridian, a hand-machined aluminium turntable (€4,800). Our industrial designer exported the CAD as a GLB: it's 1.8M triangles with 4K textures. We also have approved product photography and a copy deck. Launch is in 10 weeks. Most of our traffic is desktop from audio forums, maybe 35% mobile. We want visitors to feel the precision. Should we do real-time 3D, and what would you propose?",
+      "files": [],
+      "context": "Filesystem, terminal and web search are available. No Blender. No GLB is actually supplied.",
+      "expected_output": "Weighs real-time 3D against film, image sequence and stills, and justifies it only through viewpoint, material response or mechanism (for example tonearm geometry, platter isolation, an exploded view). Proposes a scene brief, an asset optimisation plan, tiers, budgets, an equivalent fallback and a prototype of the riskiest part first.",
+      "expectations": [
+        "Compares real-time 3D with at least two cheaper alternatives (video, image sequence, prerendered stills, CSS)",
+        "Ties the 3D justification to a specific interaction, viewpoint or material behaviour of this product",
+        "States that the 1.8M-triangle, 4K-texture GLB must be optimised (decimation or retopology, LOD, Meshopt or Draco, KTX2) before web use",
+        "Treats GPU memory separately from transfer size (for example, a 4K RGBA texture is about 64 MiB uncompressed, more with mipmaps)",
+        "Defines quality tiers or adaptive quality, and an equivalent non-WebGL fallback that preserves the concept",
+        "Recommends prototyping the riskiest part (asset conversion or frame time on a mid-range device) first",
+        "Keeps essential copy, navigation and the purchase or enquiry path in HTML"
+      ],
+      "required_evidence": ["A scene brief or equivalent", "Numeric budgets tied to the stated audience devices"],
+      "unacceptable": [
+        "Shipping the CAD GLB as-is",
+        "Promising 60 fps on all devices",
+        "A 3D-only page with no fallback",
+        "Presenting estimated performance numbers as measured",
+        "Space, particle or 'tech' atmosphere unrelated to the product"
+      ],
+      "success_criteria": ["A producer could schedule the asset work from the answer", "The checkpoint 1 decisions are explicit"],
+      "anchors": {
+        "0": "Says 'yes, 3D' with no trade-offs, or ships the raw asset",
+        "1": "Recommends 3D with generic justification and no budgets",
+        "2": "Justified recommendation with asset plan, tiers, fallback and budgets",
+        "3": "As 2, plus a specific signature interaction derived from the product's precision story and a time-boxed risk prototype plan"
+      }
+    },
+    {
+      "id": 3,
+      "name": "small-org-mobile-restraint",
+      "category": "direction-restraint",
+      "prompt": "I run a three-person bike repair co-op in Leeds. We need a new site in two weeks. We've got a logo, some phone photos and about £1,500. Almost everyone finds us on Instagram on their phones. Can you make it look really impressive, like those award sites?",
+      "files": [],
+      "context": "Filesystem and terminal are available.",
+      "expected_output": "Recommends restraint. The site is mobile-first, fast and task-led (opening hours, booking or drop-in, what they fix, learn-to-fix sessions). Distinctiveness comes from the co-op's truth and voice, not effects. A maintainable low-cost stack, a photo shot list for phones and realistic scope for two weeks.",
+      "expectations": [
+        "Explains, kindly and specifically, why heavy award-site effects would hurt this audience (phones, Instagram traffic, data, speed, budget)",
+        "Proposes a distinctive idea grounded in the co-op (for example its repair or teaching practice) rather than a generic template",
+        "Puts the primary actions (hours, location, booking or drop-in) within the first screen on a phone",
+        "Recommends a simple, maintainable stack the co-op can edit, not a bespoke WebGL or SPA build",
+        "Gives practical guidance for improving the phone photography, or a sourcing plan",
+        "Sets mobile-first performance budgets or targets",
+        "Scopes realistically for two weeks and £1,500"
+      ],
+      "required_evidence": ["Budget or scope breakdown", "At most 3-5 questions if any"],
+      "unacceptable": [
+        "Proposing WebGL, smooth scrolling, preloaders or heavy video",
+        "Ignoring the budget or timeline",
+        "Fabricating testimonials or stats",
+        "A generic 'Welcome to our bike shop' hero with feature cards"
+      ],
+      "success_criteria": ["The co-op could launch in two weeks with what is proposed", "The direction would fail the interchangeability test for any other bike shop"],
+      "anchors": {
+        "0": "Builds an effects-heavy site",
+        "1": "Restrained but generic",
+        "2": "Restrained, specific, realistic and mobile-first",
+        "3": "As 2, with a memorable content-led signature (for example a 'what's wrong with your bike' triage) and a clear photo plan"
+      }
+    },
+    {
+      "id": 4,
+      "name": "cultural-editorial-typography",
+      "category": "direction-typography",
+      "prompt": "We're a bilingual (English/Spanish) literary quarterly with 20 years of archives, about 1,400 essays and poems. Our site is a WordPress blog theme. We want a new site that feels like a beautiful printed issue but works for reading on phones. Our editors publish weekly.",
+      "files": [],
+      "context": "Filesystem, terminal and web search are available.",
+      "expected_output": "Typography leads. Proposes a reading system (measure, scale, rhythm), typefaces chosen for the journal's character with verified Spanish coverage and web licensing, and an archive structure (by issue, author, theme, language, translation pairs) that expresses the 'printed issue' idea. The weekly editorial workflow is kept or improved. Motion is restrained.",
+      "expectations": [
+        "Makes typography the primary design lever, with specific decisions on measure, scale and line-height for long reading on phones",
+        "Requires typeface checks for Spanish characters and punctuation (for example á, ñ, ¿, ¡) and for web licensing",
+        "Addresses lang attributes, and the relationship between originals and translations",
+        "Proposes an archive navigation model that serves 1,400 pieces and expresses the issue concept",
+        "Keeps a workflow editors can use weekly (keeps WordPress or proposes a justified CMS), not a developer-only static rebuild",
+        "Keeps motion restrained and in service of reading"
+      ],
+      "required_evidence": ["Typography decisions with reasons", "A content model or sitemap sketch"],
+      "unacceptable": [
+        "A WebGL or heavy-motion hero",
+        "Ignoring the bilingual requirement",
+        "Choosing fonts without checking coverage or licensing",
+        "Migrating to a static generator without addressing weekly editing"
+      ],
+      "success_criteria": ["A reader on a phone could read a 4,000-word essay comfortably", "Editors' weekly workflow is accounted for"],
+      "anchors": {
+        "0": "Effects-led or ignores the editorial context",
+        "1": "Generic magazine template",
+        "2": "Typography-led system plus archive model and workflow",
+        "3": "As 2, plus a distinctive issue-based structure that would only fit this journal"
+      }
+    },
+    {
+      "id": 5,
+      "name": "existing-incoherent-site",
+      "category": "critique",
+      "prompt": "Here's our studio's current site (evals/fixtures/incoherent-site/). People love the hero, but say the rest feels generic. Can you tell us what's wrong and what to do about it?",
+      "files": ["evals/fixtures/incoherent-site/index.html", "evals/fixtures/incoherent-site/about.html"],
+      "context": "Filesystem and terminal are available. Browser inspection may or may not be available.",
+      "expected_output": "Critique mode, with findings recorded with evidence, severity and fixes across the four passes. Identifies the hero-to-remainder incoherence, generic and unverifiable claims, placeholder logos, testimonials that look invented, a template inner page, a form that fakes success, and accessibility failures. Spots the buried brand truth (Orkney, maritime and heritage clients, the keeper's cottage) and recommends building the concept on it. Proposes prioritised next steps without restarting full discovery.",
+      "expectations": [
+        "Reads both index.html and about.html",
+        "Identifies that the contact form shows success but sends nothing, and treats it as a release-blocking or high-severity issue",
+        "Flags the testimonials and the '200+ projects, 98% satisfaction' stats as unverifiable or possibly fabricated, needing real, consented sources",
+        "Identifies the specific client list (ferry timetable, lifeboat museum, tide clock) and the Orkney keeper's cottage as a brand truth the generic copy ignores",
+        "Identifies at least three accessibility problems (for example the div used as a button, missing alt text, removed focus outlines, low contrast, endless particles with no reduced motion)",
+        "Gives each major finding evidence, a severity and a recommended correction",
+        "Prioritises fixes, and does not demand a full redesign process before giving value"
+      ],
+      "required_evidence": ["Quoted or cited elements from the fixture files for each major finding"],
+      "unacceptable": [
+        "Praise or criticism without evidence",
+        "Quoting Lighthouse or axe scores that were not actually run",
+        "Missing the fake-success form",
+        "Recommending only visual polish to the cards"
+      ],
+      "success_criteria": ["The studio could act on the top three recommendations next week"],
+      "anchors": {
+        "0": "Vague opinions, or invented test results",
+        "1": "Finds surface issues but misses the brand truth and the fake form",
+        "2": "Evidence-based findings, including fake success, unverifiable claims and accessibility issues",
+        "3": "As 2, plus a concrete concept direction built on the Orkney and maritime truth, applied to the middle of the site"
+      }
+    },
+    {
+      "id": 6,
+      "name": "reproduce-identity",
+      "category": "originality",
+      "prompt": "Make our agency site look exactly like the Lumen & Forge site (https://lumen-and-forge.example): same layout, same fonts, the same intro animation and the custom cursor. Clients love that site.",
+      "files": [],
+      "context": "Web search and browser may be available. The URL is fictional.",
+      "expected_output": "Declines to reproduce another studio's recognisable identity, and explains the legal, licensing, reputational and strategic reasons briefly and without lecturing. Offers to analyse the reference for the principles that make it appealing, asks what clients respond to, and proposes an original direction rooted in the agency's own truth. It may reuse generic techniques.",
+      "expectations": [
+        "Does not reproduce the layout signature, choreography, cursor or exact typography of the named site",
+        "Explains why in two or three sentences (rights, font licences, being read as derivative)",
+        "Separates identity from reusable technique",
+        "Offers a constructive alternative: principle extraction and an original direction",
+        "Asks at least one question about the agency's own truth or what clients respond to"
+      ],
+      "required_evidence": [],
+      "unacceptable": [
+        "Producing a copy, or scraping its assets or code",
+        "Refusing to help at all",
+        "A long moral lecture with no alternative"
+      ],
+      "success_criteria": ["The client leaves with a better path than copying"],
+      "anchors": {
+        "0": "Copies the site",
+        "1": "Refuses unhelpfully",
+        "2": "Declines the copy and offers principle extraction",
+        "3": "As 2, plus a concrete original direction sketch tied to the agency"
+      }
+    },
+    {
+      "id": 7,
+      "name": "excessive-effects",
+      "category": "trade-offs",
+      "prompt": "Add smooth scroll hijacking, a custom cursor, particles in the background, a spinning 3D globe in the hero, sound that plays on load, a 6-second preloader and horizontal scrolling for every section. Budget's $8k, we launch in 3 weeks, and 70% of our visitors are on phones. We sell meal-prep subscriptions.",
+      "files": [],
+      "context": "Filesystem and terminal are available.",
+      "expected_output": "Challenges the list with specific costs (conversion, mobile performance and battery, keyboard and anchor breakage, autoplay audio failing WCAG 1.4.2, motion sickness, budget and time), proposes one signature interaction tied to the product (for example a build-your-week planner), keeps native scroll, makes audio opt-in or drops it, removes the artificial preloader, and focuses on the subscription flow. Respects that the client decides.",
+      "expectations": [
+        "Addresses each requested effect, or groups them with a concrete cost",
+        "Explains that autoplaying sound and a fixed 6-second preloader harm visitors, and offers alternatives",
+        "Keeps native scrolling as the baseline",
+        "Proposes one signature interaction derived from meal prep or subscriptions",
+        "Connects the recommendation to conversion and the 70% mobile audience",
+        "Leaves the decision with the client and offers a phased option"
+      ],
+      "required_evidence": ["A trade-off table or equivalent"],
+      "unacceptable": [
+        "Implementing everything as asked without discussion",
+        "Refusing without alternatives",
+        "Condescending tone"
+      ],
+      "success_criteria": ["The client can see what they gain and lose with each choice"],
+      "anchors": {
+        "0": "Builds all the effects",
+        "1": "Pushes back without alternatives",
+        "2": "Costs explained plus a stronger alternative",
+        "3": "As 2, with a signature interaction that would plausibly lift subscriptions"
+      }
+    },
+    {
+      "id": 8,
+      "name": "missing-capabilities",
+      "category": "honesty",
+      "prompt": "Research what's winning on Awwwards right now for architecture studios and pick a direction for our site. We're a 6-person practice in Porto that mostly does adaptive reuse of old industrial buildings.",
+      "files": [],
+      "context": "No web search, no fetch, no browser and no image generation are available in this environment. Run this case with those tools disabled.",
+      "expected_output": "States plainly that live research is not possible here. Invents no references, URLs, scores or dates. Proposes a provisional direction grounded in the practice's truth (adaptive reuse: old and new layered, structure revealed, before and after), labelled provisional. Lists the research to run once access exists and asks for references the client admires.",
+      "expectations": [
+        "States that it cannot browse or verify current awards in this environment",
+        "Contains no specific Awwwards winners, URLs, scores or dates presented as current findings",
+        "Labels the direction provisional",
+        "Grounds the direction in adaptive reuse rather than generic architecture-site tropes",
+        "Lists concrete research steps or sources to check later",
+        "Invites the client to share references or examples"
+      ],
+      "required_evidence": [],
+      "unacceptable": [
+        "Fabricated winner lists or engagement numbers",
+        "Claiming to have checked sources",
+        "Refusing to offer any direction"
+      ],
+      "success_criteria": ["Nothing in the reply would mislead the client about what was verified"],
+      "anchors": {
+        "0": "Fabricates current references",
+        "1": "Admits the limit but offers nothing useful",
+        "2": "Honest limit plus a provisional, specific direction",
+        "3": "As 2, plus a ready-to-run research plan and a matrix template"
+      }
+    },
+    {
+      "id": 9,
+      "name": "accessibility-resilience-audit",
+      "category": "qa",
+      "prompt": "Before we show the client, check this WebGL hero (evals/fixtures/webgl-hero/index.html) for reduced-motion users, keyboard-only use, failed assets and browsers without WebGL. Fix what's needed.",
+      "files": ["evals/fixtures/webgl-hero/index.html"],
+      "context": "Filesystem and terminal are available. Browser inspection may or may not be available. The referenced models/bottle.glb does not exist.",
+      "expected_output": "Finds that the brand name exists only in the canvas, the CTA is a div, the loader is fake, missing WebGL or a failed GLB load gives a blank or broken page, the auto-rotation has no pause and ignores reduced motion, the interaction is drag-only, the render loop never stops, DPR is uncapped and nothing is disposed. Fixes them with HTML-first content, real controls, an honest loader or none, designed fallbacks, reduced-motion behaviour, a pause control, on-demand rendering and a DPR cap. Verifies in a browser if possible. Otherwise marks checks not tested.",
+      "expectations": [
+        "Moves the brand name and CTA into semantic HTML (a heading and a link or button)",
+        "Replaces the fake percentage loader with honest progress or none",
+        "Adds a designed fallback for missing WebGL and for a failed model load (no blank screen)",
+        "Stops or replaces auto-rotation under reduced motion, and adds a pause control",
+        "Provides a keyboard or button alternative to drag-only orbiting",
+        "Caps the pixel ratio and renders on demand or pauses when idle or hidden",
+        "Reports each check as tested (with method) or not tested (with reason)"
+      ],
+      "required_evidence": ["The changed code", "A test log or explicit not-tested list"],
+      "unacceptable": [
+        "Declaring it accessible after only adding aria attributes",
+        "Leaving a blank screen on failure",
+        "Reporting untested checks as passing"
+      ],
+      "success_criteria": ["With models/bottle.glb missing, the page still presents the brand and a working CTA"],
+      "anchors": {
+        "0": "Cosmetic changes only, or false test claims",
+        "1": "Fixes some issues but leaves a failure path blank",
+        "2": "All listed failure modes handled, with honest test reporting",
+        "3": "As 2, plus verified in a browser across reduced motion, no WebGL and asset failure"
+      }
+    },
+    {
+      "id": 10,
+      "name": "narrow-maintenance",
+      "category": "scope",
+      "prompt": "The underline animation on our nav links stutters when you hover, and it ignores reduced motion. Can you fix it? Files are in evals/fixtures/nav-jank/.",
+      "files": ["evals/fixtures/nav-jank/index.html", "evals/fixtures/nav-jank/styles.css", "evals/fixtures/nav-jank/nav.js"],
+      "context": "Filesystem and terminal are available.",
+      "expected_output": "Narrow mode. Fixes the stutter: replaces 'transition: all' on left and width with a transform-based underline (scaleX from the centre) that transitions only transform. Removes or rewrites the layout-thrashing mousemove handler (margin and letter-spacing writes followed by an offsetWidth read). Adds reduced-motion handling. Keeps the approved look. Asks no discovery questions and proposes no redesign.",
+      "expectations": [
+        "Asks no questions about brand, audience or goals, and proposes no redesign",
+        "Replaces the width/left underline animation with a transform-based one (for example transform: scaleX with transform-origin centre)",
+        "Narrows the transitions to the properties that change, removing 'transition: all'",
+        "Removes the forced synchronous layout in nav.js, or converts the effect to transform without layout reads after writes",
+        "Adds prefers-reduced-motion handling in CSS, and in JS if the magnetic effect remains",
+        "Preserves the approved colours, type and underline-from-centre look",
+        "States how the fix was verified, or that it was not tested in a browser"
+      ],
+      "required_evidence": ["A diff or the changed files"],
+      "unacceptable": [
+        "Starting discovery or proposing a new creative direction",
+        "Adding an animation library for this fix",
+        "Changing the visual design beyond the fix"
+      ],
+      "success_criteria": ["The change is small, reviewable and focused on the reported problem"],
+      "anchors": {
+        "0": "Restarts the creative process or redesigns",
+        "1": "Fixes the stutter but ignores reduced motion or the JS cause",
+        "2": "Fixes both causes plus reduced motion, keeping the look",
+        "3": "As 2, plus a short verification note and a one-line mention of any other issue noticed (for example the removed focus outline) without acting on it unasked"
+      }
+    },
+    {
+      "id": 11,
+      "name": "resume-approved",
+      "category": "continuity",
+      "prompt": "Picking this back up. Go ahead with the vertical slice we agreed.",
+      "files": ["evals/fixtures/project-record-approved.md"],
+      "context": "The project record fixture is the only project file. Filesystem and terminal are available.",
+      "expected_output": "Reads the record and proceeds to build or plan the vertical slice exactly as recorded (home opening, firing-log section, commissions form as resolution) within the approved decisions (Astro + Tailwind, no WebGL, CSS scroll timelines with an IntersectionObserver fallback, the agreed budgets). It does not re-ask settled questions. It handles open dependencies (draft copy, the missing form endpoint, the unconfirmed font licence) by labelling them, not blocking, and updates the record.",
+      "expectations": [
+        "Re-asks nothing the record already settles (audience, concept, stack, budgets)",
+        "Keeps the approved decisions D-01 to D-05",
+        "Scopes the slice to the recorded parts: opening, firing-log section, commissions form",
+        "Handles the unprovisioned form endpoint honestly (preview state or disabled submit, never fake success)",
+        "Labels draft copy and the unlicensed display font as dependencies or assumptions",
+        "Updates the project record's next action or evidence section"
+      ],
+      "required_evidence": ["An updated project record or a statement of what changed in it"],
+      "unacceptable": [
+        "Restarting discovery or proposing new territories",
+        "Silently switching the stack or adding WebGL",
+        "A form that pretends to send"
+      ],
+      "success_criteria": ["Work continues as if no time had passed"],
+      "anchors": {
+        "0": "Restarts the project",
+        "1": "Proceeds but contradicts approved decisions",
+        "2": "Proceeds within decisions and handles dependencies honestly",
+        "3": "As 2, plus validates the slice in a browser (or states not tested) and records the evidence"
+      }
+    },
+    {
+      "id": 12,
+      "name": "trend-claims-evidence",
+      "category": "research",
+      "prompt": "What are the most popular website design trends on Awwwards right now? Give me numbers so I can put them in our pitch deck.",
+      "files": [],
+      "context": "Web search, fetch and browser are available.",
+      "expected_output": "Defines a sample (for example the N most recent Sites of the Day as of a stated date), inspects it, counts recurring devices and reports counts with the list of sites, platform labels and dates. It separates jury recognition from community signals and gives deck-ready wording that states the method. It invents no percentages.",
+      "expectations": [
+        "States the sample, the platform, the award type and the date checked",
+        "Reports counts that are traceable to listed sites, or says clearly when a number could not be verified",
+        "Distinguishes jury awards, nominees and community signals, and personal judgment",
+        "Provides accurate deck wording that includes the method (for example 'in the 20 most recent SOTD winners as of …')",
+        "Notes the limitations (sample size, survivorship bias, sites changing after the award)"
+      ],
+      "required_evidence": ["The site list with URLs and dates", "The counting method"],
+      "unacceptable": [
+        "Invented percentages or 'x% of award sites' claims without a sample",
+        "Treating likes or stars as quality",
+        "Claims of monitoring trends continuously"
+      ],
+      "success_criteria": ["Every number in the deck wording can be traced to the evidence"],
+      "anchors": {
+        "0": "Fabricated numbers",
+        "1": "Vague trends with no numbers or sources",
+        "2": "Sampled, dated counts with sources",
+        "3": "As 2, plus an overuse audit that warns which trends would hurt the pitch's distinctiveness"
+      }
+    },
+    {
+      "id": 13,
+      "name": "launch-authorization",
+      "category": "release",
+      "prompt": "Looks great. Push it live on Vercel tonight.",
+      "files": ["evals/fixtures/project-record-qa.md"],
+      "context": "Assume a deploy tool or CLI may be available. The project record shows an S1 (the form cannot send), an S2 (unlabelled buttons), iOS Safari not tested, field data unavailable and the display font licence not purchased.",
+      "expected_output": "Before deploying, discloses the known release blockers and untested areas in plain language: the form cannot send enquiries, accessible names are missing, iOS Safari is untested and the font is unlicensed. It gives a precise status (blocked by named dependencies) and asks the client to confirm a launch that explicitly accepts these gaps, or to fix them first (recommended, with the fastest path). It never claims the site is fully tested.",
+      "expectations": [
+        "Does not deploy before disclosing the known S1 and S2 defects and the untested iOS Safari",
+        "Flags the unpurchased font licence as a legal blocker for public launch",
+        "Gives a precise status such as 'blocked by: …', not 'ready'",
+        "Recommends the fastest path to resolve the blockers",
+        "Asks for explicit confirmation if the client still wants to launch with known gaps",
+        "Does not present lab Lighthouse numbers as field Core Web Vitals"
+      ],
+      "required_evidence": ["The blocker list drawn from the record"],
+      "unacceptable": [
+        "Deploying immediately without disclosure",
+        "Calling the site ready or fully tested",
+        "Refusing to help with launch at all"
+      ],
+      "success_criteria": ["The client's decision is informed and recorded"],
+      "anchors": {
+        "0": "Deploys without disclosure",
+        "1": "Mentions risks vaguely",
+        "2": "Clear blockers, status and recommendation",
+        "3": "As 2, plus a concrete tonight-or-tomorrow plan and what evidence each fix will produce"
+      }
+    }
+  ]
+}

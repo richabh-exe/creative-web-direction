@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Line reveal: accessible and layout-aware</title>
+<!--
+  creative-web-direction · technical example · line-mask reveal
+
+  Demonstrates
+  - Splitting plain-text headings into visual lines measured from real layout,
+    then masking each line and revealing it with the Web Animations API.
+  - One accessible representation: the original text stays in a visually hidden
+    span and the split copy is aria-hidden, so the heading is announced once, in full.
+  - Re-splitting after web fonts load and whenever the heading's width changes,
+    without replaying a finished reveal or leaving one stuck half-way.
+  - Reduced motion: no translation. The text is simply shown.
+  - Failure: nothing is hidden by CSS. If the script fails, plain headings remain.
+  - Fast scrolling: a heading scrolled past unseen is shown, not left hidden.
+
+  Limits
+  - Plain-text headings only. Inline markup such as <em> is flattened. For rich
+    inline content, use a maintained splitter (for example GSAP SplitText) and verify
+    its screen-reader output.
+  - Lines are detected by comparing word offsets, which suits left-aligned text.
+
+  Test hooks: ?reduced=1 forces the reduced-motion path. The panel at the bottom
+  right shows each heading's state, line count and split count.
+  No build step and no dependencies. The web font is optional (system serif fallback).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&display=swap">
+<style>
+  :root {
+    --ink: #1c1a16;
+    --paper: #f3efe6;
+    --muted: #59544a;
+    --accent: #8f3a1c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 1.0625rem/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 70rem; margin: 0 auto; padding: 0 1.25rem 45svh; }
+  h1, h2 {
+    font-family: "Fraunces", Georgia, "Times New Roman", serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.04;
+    margin: 0 0 1.5rem;
+  }
+  h1 { font-size: clamp(2.6rem, 1.3rem + 5.5vw, 7rem); max-width: 13ch; padding-top: 16svh; }
+  h2 { font-size: clamp(2rem, 1.1rem + 3.6vw, 4.6rem); max-width: 15ch; margin-top: 75svh; }
+  p { max-width: 62ch; color: var(--muted); margin: 0 0 1rem; }
+  .eyebrow { font-size: .85rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-top: 0; }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+  }
+  /* Each visual line is a mask. Padding plus a matching negative margin keeps descenders visible. */
+  .line-mask { display: block; overflow: hidden; overflow: clip; padding-bottom: .14em; margin-bottom: -.14em; }
+  .line-inner { display: block; }
+
+  .harness {
+    position: fixed; right: .75rem; bottom: .75rem; z-index: 2;
+    max-width: min(24rem, calc(100vw - 1.5rem));
+    background: #fffdf8; border: 1px solid #cfc6b5; border-radius: .5rem;
+    padding: .6rem .8rem; font: 500 .78rem/1.45 ui-monospace, "Cascadia Mono", Consolas, monospace;
+    box-shadow: 0 .25rem 1rem rgb(0 0 0 / .08);
+  }
+  .harness ul { margin: .25rem 0 .5rem; padding-left: 1rem; }
+  .harness button {
+    font: inherit; padding: .35rem .6rem; border-radius: .35rem;
+    border: 1px solid var(--ink); background: var(--ink); color: var(--paper); cursor: pointer;
+  }
+  .harness button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Technical example</p>
+  <h1 data-reveal>Every line arrives when the reader does</h1>
+  <p>This heading is split into the lines the browser actually renders. Each line is revealed from behind its own mask. Resize the window or wait for the web font to load, and the lines are measured again.</p>
+
+  <h2 data-reveal>Motion with a reason, stillness by default</h2>
+  <p>Scroll down quickly past the next heading, then come back. A heading you skipped is already shown. It is never left hidden waiting for an animation you missed.</p>
+
+  <h2 data-reveal>One heading, announced once, in full</h2>
+  <p>Screen readers read the original text from a visually hidden copy. The animated lines are hidden from assistive technology, so nothing is announced word by word or twice.</p>
+</main>
+
+<aside class="harness" aria-label="Test harness">
+  <strong>Harness</strong>
+  <div id="env"></div>
+  <ul id="items"></ul>
+  <button type="button" id="replay">Replay reveals</button>
+</aside>
+
+<script>
+(() => {
+  "use strict";
+
+  const params = new URLSearchParams(location.search);
+  const reducedQuery = matchMedia("(prefers-reduced-motion: reduce)");
+  const isReduced = () => params.get("reduced") === "1" || reducedQuery.matches;
+
+  // Motion tokens. 700 ms per line with an 80 ms stagger finishes four lines in about 1 s.
+  const DURATION = 700;
+  const STAGGER = 80;
+  const EASE = "cubic-bezier(.2,.7,.1,1)"; // "release": quick start, long settle
+  const HIDDEN = "translateY(105%)";       // just past the mask edge
+  const RESPLIT_DEBOUNCE = 120;            // ms; coalesces resize bursts
+
+  const items = new Map(); // element -> state record
+  const canAnimate = typeof Element.prototype.animate === "function";
+  let fontsState = document.fonts ? "loading" : "unavailable";
+
+  function setup(el) {
+    const text = el.textContent.replace(/\s+/g, " ").trim();
+    const sr = document.createElement("span");
+    sr.className = "sr-only";
+    sr.textContent = text;
+    const visual = document.createElement("span");
+    visual.setAttribute("aria-hidden", "true");
+    el.replaceChildren(sr, visual);
+    const item = { el, text, visual, lines: [], anims: [], splits: 0, splitWidth: 0, timer: 0,
+                   state: isReduced() ? "shown" : "waiting" };
+    items.set(el, item);
+    split(item);
+  }
+
+  function split(item) {
+    const { visual, text } = item;
+    // 1. Lay the words out inline so they wrap exactly as the real text would.
+    visual.replaceChildren();
+    const words = text.split(" ");
+    const spans = words.map((word, i) => {
+      const s = document.createElement("span");
+      s.textContent = word;
+      visual.append(s);
+      if (i < words.length - 1) visual.append(" ");
+      return s;
+    });
+    // 2. Read phase: group words by rendered line.
+    const groups = [];
+    let lastTop = null;
+    for (const s of spans) {
+      const top = Math.round(s.offsetTop);
+      if (top !== lastTop) { groups.push([]); lastTop = top; }
+      groups[groups.length - 1].push(s.textContent);
+    }
+    // 3. Write phase: rebuild as one mask per line.
+    visual.replaceChildren(...groups.map((g) => {
+      const mask = document.createElement("span");
+      mask.className = "line-mask";
+      const inner = document.createElement("span");
+      inner.className = "line-inner";
+      inner.textContent = g.join(" ");
+      mask.append(inner);
+      return mask;
+    }));
+    item.lines = [...visual.querySelectorAll(".line-inner")];
+    item.splits += 1;
+    item.splitWidth = contentWidth(item.el); // the width these lines were measured at
+    applyState(item);
+  }
+
+  function contentWidth(el) {
+    const cs = getComputedStyle(el);
+    return el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  }
+
+  function cancelAnims(item) {
+    item.anims.forEach((a) => a.cancel());
+    item.anims = [];
+  }
+
+  function applyState(item) {
+    cancelAnims(item);
+    const transform = item.state === "waiting" ? HIDDEN : "";
+    item.lines.forEach((line) => { line.style.transform = transform; });
+    renderHarness();
+  }
+
+  function play(item) {
+    if (item.state !== "waiting") return;
+    if (isReduced() || !canAnimate) { show(item); return; }
+    item.state = "playing";
+    item.anims = item.lines.map((line, i) => line.animate(
+      [{ transform: HIDDEN }, { transform: "translateY(0)" }],
+      { duration: DURATION, delay: i * STAGGER, easing: EASE, fill: "backwards" }
+    ));
+    // The animations hold the hidden pose during their delay ("backwards" fill), so the
+    // inline style can return to the natural, shown state immediately with no flash.
+    item.lines.forEach((line) => { line.style.transform = ""; });
+    renderHarness();
+    Promise.all(item.anims.map((a) => a.finished)).then(() => {
+      if (item.state === "playing") { item.state = "shown"; item.anims = []; renderHarness(); }
+    }, () => { /* cancelled: whoever cancelled has already set the final state */ });
+  }
+
+  function show(item) {
+    if (item.state === "shown") return;
+    item.state = "shown";
+    applyState(item);
+  }
+
+  function resplit(item) {
+    // Never replay or freeze mid-way: a reveal in progress jumps to its end state.
+    if (item.state === "playing") item.state = "shown";
+    split(item);
+  }
+
+  // Set up every heading, falling back to plain text if anything goes wrong.
+  document.querySelectorAll("[data-reveal]").forEach((el) => {
+    const original = el.textContent;
+    try { setup(el); } catch (err) {
+      el.textContent = original;
+      items.delete(el);
+      console.warn("line-reveal: left heading as plain text", err);
+    }
+  });
+
+  // Reveal on entry. Show anything the visitor scrolled past without seeing.
+  const io = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      const item = items.get(entry.target);
+      if (!item) continue;
+      if (entry.isIntersecting) play(item);
+      else if (entry.boundingClientRect.bottom < 0) show(item);
+    }
+  }, { rootMargin: "0px 0px -15% 0px" });
+
+  // Re-measure whenever the width differs from the width the lines were measured at.
+  // Comparing against the split width, not the previous observation, also catches a
+  // layout that settled between the first split and the first observation.
+  const ro = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      const item = items.get(entry.target);
+      if (!item) continue;
+      if (Math.abs(entry.contentRect.width - item.splitWidth) < 1) continue; // sub-pixel noise
+      clearTimeout(item.timer);
+      item.timer = setTimeout(() => resplit(item), RESPLIT_DEBOUNCE);
+    }
+  });
+
+  items.forEach((item) => { io.observe(item.el); ro.observe(item.el); });
+
+  // IntersectionObserver reports only changes. A jump from below the viewport to above it
+  // (an anchor link, the End key) never intersects, so also check on scroll, once per frame,
+  // while anything is still waiting.
+  let scrollFrame = 0;
+  function checkSkipped() {
+    scrollFrame = 0;
+    let waiting = 0;
+    items.forEach((item) => {
+      if (item.state !== "waiting") return;
+      if (item.el.getBoundingClientRect().bottom < 0) show(item); else waiting++;
+    });
+    if (!waiting) removeEventListener("scroll", onScroll);
+  }
+  function onScroll() { if (!scrollFrame) scrollFrame = requestAnimationFrame(checkSkipped); }
+  addEventListener("scroll", onScroll, { passive: true });
+
+  // Line breaks depend on font metrics: re-split once web fonts are ready.
+  if (document.fonts) {
+    document.fonts.ready.then(() => {
+      fontsState = "ready";
+      items.forEach(resplit);
+    });
+  }
+
+  // If the visitor turns on reduced motion mid-session, finish everything now.
+  reducedQuery.addEventListener("change", () => { if (isReduced()) items.forEach(show); });
+
+  document.getElementById("replay").addEventListener("click", () => {
+    items.forEach((item) => {
+      item.state = isReduced() ? "shown" : "waiting";
+      applyState(item);
+      io.unobserve(item.el);
+      io.observe(item.el); // re-observing reports the current intersection again
+    });
+    addEventListener("scroll", onScroll, { passive: true }); // adding twice is a no-op
+  });
+
+  function renderHarness() {
+    const env = document.getElementById("env");
+    const list = document.getElementById("items");
+    if (!env || !list) return;
+    env.textContent = `Reduced motion: ${isReduced() ? "yes" : "no"} · Fonts: ${fontsState}`;
+    list.replaceChildren(...[...items.values()].map((item, i) => {
+      const li = document.createElement("li");
+      li.textContent = `#${i + 1} ${item.state} · ${item.lines.length} lines · ${item.splits} splits`;
+      return li;
+    }));
+  }
+  renderHarness();
+  window.__lineReveal = { items }; // exposed for automated checks
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scroll chapter: scroll-linked, sticky and escapable</title>
+<!--
+  creative-web-direction · technical example · scroll-linked chapter
+
+  Demonstrates
+  - Native scroll as the baseline. Nothing hijacks scrolling, and anchors, keyboard
+    scrolling and find-in-page keep working.
+  - Scroll-linked reveals and a chapter progress meter using CSS scroll-driven animations
+    (animation-timeline: view() and a named view timeline), gated by @supports.
+  - A fallback for browsers without scroll timelines: IntersectionObserver toggles a class
+    for discrete reveals, and the meter follows the active step.
+  - "Pinning" with position: sticky (no JS pinning), plus a visible "Skip this chapter"
+    escape link and scroll-padding so focused links are not hidden behind the sticky stage
+    on narrow screens (WCAG 2.4.11).
+  - Story text in normal document flow, readable by screen readers and by visitors who skip.
+  - Reduced motion: no movement, only instant state changes.
+
+  Progressive enhancement: motion classes are added by a tiny head script only when motion
+  is allowed. Without JavaScript all content is static and visible.
+
+  Test hooks: ?fallback=1 forces the IntersectionObserver path even where scroll timelines
+  exist. ?reduced=1 forces reduced motion. The panel at the bottom left shows which path ran.
+-->
+<script>
+  (function () {
+    var p = new URLSearchParams(location.search);
+    var html = document.documentElement;
+    var reduced = p.get("reduced") === "1" || matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!reduced) html.classList.add("motion-ok");
+    var timelines = !!(window.CSS && CSS.supports && CSS.supports("animation-timeline: view()"));
+    html.classList.add(timelines && p.get("fallback") !== "1" ? "has-timelines" : "no-timelines");
+  })();
+</script>
+<style>
+  :root {
+    --ink: #121417;
+    --paper: #edf0ec;
+    --muted: #4c544f;
+    --accent: #1d6b58;
+    --line: #b9c3bc;
+    --ease-settle: cubic-bezier(.2,.7,.1,1);
+    --stage-narrow: 40svh;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: auto; }
+  html.motion-ok { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1.0625rem/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  a { color: var(--accent); text-underline-offset: .18em; }
+  a:focus-visible, [tabindex="-1"]:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+  [tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
+  .wrap { max-width: 72rem; margin: 0 auto; padding: 0 1.25rem; }
+  h1, h2, h3 { line-height: 1.1; letter-spacing: -0.015em; }
+  h1 { font-size: clamp(2.4rem, 1.4rem + 4vw, 5rem); margin: 18svh 0 1rem; max-width: 16ch; }
+  h2 { font-size: clamp(1.8rem, 1.2rem + 2.2vw, 3rem); margin: 0 0 1.5rem; }
+  p { max-width: 60ch; }
+  .page-nav { display: flex; gap: 1.25rem; flex-wrap: wrap; margin: 1.5rem 0 0; padding: 0; list-style: none; }
+  .intro .reveal { margin-top: 30svh; }
+
+  /* Decorative page progress (only where scroll timelines exist). */
+  .progress { position: fixed; inset: 0 0 auto 0; height: 3px; background: var(--accent); transform-origin: 0 50%; transform: scaleX(0); display: none; z-index: 5; }
+  .has-timelines .progress { display: block; animation: grow linear both; animation-timeline: scroll(root block); }
+  @keyframes grow { to { transform: scaleX(1); } }
+
+  /* Scroll-linked reveal (native). animation-timeline must come after the shorthand. */
+  .has-timelines.motion-ok .reveal {
+    animation: reveal-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 35%;
+  }
+  @keyframes reveal-in { from { opacity: 0; transform: translateY(2.5rem); } to { opacity: 1; transform: none; } }
+
+  /* Fallback reveal: discrete, only once the script has confirmed it is running. */
+  .no-timelines.motion-ok .reveal { transition: opacity .6s ease-out, transform .6s var(--ease-settle); }
+  .no-timelines.motion-ok.reveal-ready .reveal:not(.is-visible) { opacity: 0; transform: translateY(1.5rem); }
+
+  .skip-chapter { display: inline-block; margin: 20svh 0 2rem; font-weight: 600; }
+
+  /* The chapter: sticky stage plus steps in normal flow. */
+  .chapter { view-timeline-name: --chapter; border-top: 1px solid var(--line); padding-top: 3rem; }
+  .chapter-grid { display: grid; grid-template-columns: 1fr; }
+  .stage {
+    position: sticky; top: 0; height: var(--stage-narrow); z-index: 1;
+    display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1rem;
+    background: var(--paper); border-bottom: 1px solid var(--line);
+  }
+  .stage svg { width: 100%; height: 100%; max-height: 100%; }
+  .meter { width: 6px; height: 70%; background: var(--line); border-radius: 3px; overflow: hidden; }
+  .meter-fill { width: 100%; height: 100%; background: var(--accent); transform-origin: 50% 0; transform: scaleY(0); }
+  .has-timelines .meter-fill { animation: fill linear both; animation-timeline: --chapter; animation-range: contain 0% contain 100%; }
+  @keyframes fill { to { transform: scaleY(1); } }
+  .no-timelines .stage[data-active="1"] .meter-fill { transform: scaleY(.34); }
+  .no-timelines .stage[data-active="2"] .meter-fill { transform: scaleY(.67); }
+  .no-timelines .stage[data-active="3"] .meter-fill { transform: scaleY(1); }
+  .motion-ok.no-timelines .meter-fill { transition: transform .45s var(--ease-settle); }
+
+  .mark { opacity: .22; }
+  .mark.is-active { opacity: 1; }
+  .motion-ok .mark { transition: opacity .3s ease-out, transform .45s var(--ease-settle); transform-box: fill-box; transform-origin: center; }
+  .motion-ok .mark:not(.is-active) { transform: translateY(6px); }
+
+  .steps { list-style: none; margin: 0; padding: 0; }
+  .step { min-height: 75svh; display: flex; flex-direction: column; justify-content: center; padding: 2rem 0; }
+  .step h3 { font-size: 1.5rem; margin: 0 0 .5rem; }
+
+  /* Keep focused content clear of the sticky stage on narrow screens (WCAG 2.4.11). */
+  @media (max-width: 47.99rem) { html { scroll-padding-top: calc(var(--stage-narrow) + 1rem); } }
+  @media (min-width: 48rem) {
+    .chapter-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 3rem; }
+    .stage { top: 10svh; height: 80svh; border-bottom: 0; }
+  }
+
+  .after { min-height: 80svh; padding: 4rem 0; border-top: 1px solid var(--line); }
+  .harness { position: fixed; left: .75rem; bottom: .75rem; z-index: 6; background: #fff; border: 1px solid var(--line); border-radius: .5rem; padding: .5rem .75rem; font: 500 .78rem/1.45 ui-monospace, Consolas, monospace; max-width: calc(100vw - 1.5rem); }
+</style>
+</head>
+<body>
+<div class="progress" aria-hidden="true"></div>
+<main class="wrap">
+  <section class="intro" aria-labelledby="page-title">
+    <h1 id="page-title">How a phrase is built</h1>
+    <p>A short chapter that follows your scroll without taking it over. Use the links to jump around. Everything still works as an ordinary page.</p>
+    <ul class="page-nav">
+      <li><a href="#chapter">Go to the chapter</a></li>
+      <li><a href="#after-chapter">Go past the chapter</a></li>
+    </ul>
+    <p class="reveal">Each paragraph in this introduction is linked to its position in the viewport where the browser supports scroll timelines, and revealed once on entry where it doesn't.</p>
+    <p class="reveal">With reduced motion requested, nothing moves. The text is simply there.</p>
+  </section>
+
+  <a class="skip-chapter" href="#after-chapter">Skip this chapter</a>
+
+  <section id="chapter" class="chapter" aria-labelledby="chapter-title">
+    <h2 id="chapter-title">Three marks, one phrase</h2>
+    <div class="chapter-grid">
+      <div class="stage" data-active="1" aria-hidden="true">
+        <svg viewBox="0 0 400 300" role="presentation" focusable="false">
+          <line x1="20" y1="250" x2="380" y2="250" stroke="#b9c3bc" stroke-width="2"/>
+          <!-- Only the shapes dim; labels keep full contrast in every state. -->
+          <g class="mark is-active" data-step="1"><rect x="50" y="110" width="70" height="140" rx="6" fill="#1d6b58"/></g>
+          <g class="mark" data-step="2"><path d="M165 250 L200 70 L235 250 Z" fill="#c2833a"/></g>
+          <g class="mark" data-step="3"><circle cx="315" cy="200" r="48" fill="#8f3a1c"/></g>
+          <g font-size="16" fill="#121417" text-anchor="middle">
+            <text x="85" y="280">weight</text>
+            <text x="200" y="280">suspend</text>
+            <text x="315" y="280">release</text>
+          </g>
+        </svg>
+        <div class="meter"><div class="meter-fill"></div></div>
+      </div>
+      <ol class="steps">
+        <li class="step" data-step="1">
+          <h3>Weight</h3>
+          <p>The phrase begins low and heavy. The first mark is a block: grounded, slow to move. On the stage it is the only mark at full strength.</p>
+          <p><a href="#chapter-title">Back to the chapter heading</a></p>
+        </li>
+        <li class="step" data-step="2">
+          <h3>Suspension</h3>
+          <p>The body rises and holds. The second mark is a peak that the eye rests on before anything resolves.</p>
+        </li>
+        <li class="step" data-step="3">
+          <h3>Release</h3>
+          <p>Everything falls at once and settles. The third mark is round: momentum spent, phrase complete.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="after-chapter" class="after" tabindex="-1" aria-labelledby="after-title">
+    <h2 id="after-title">After the chapter</h2>
+    <p>You arrived here by scrolling or by the skip link. Either way, focus and reading position are where you expect them.</p>
+  </section>
+</main>
+
+<aside class="harness" aria-label="Test harness"><strong>Harness</strong> <span id="harness"></span></aside>
+
+<script>
+(() => {
+  "use strict";
+  const html = document.documentElement;
+  const stage = document.querySelector(".stage");
+  const marks = [...stage.querySelectorAll(".mark")];
+  const forcedReduced = new URLSearchParams(location.search).get("reduced") === "1";
+  const reducedQuery = matchMedia("(prefers-reduced-motion: reduce)");
+
+  // Active step: the step crossing the middle band of the viewport drives the stage.
+  const stepObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      const n = entry.target.dataset.step;
+      stage.dataset.active = n;
+      marks.forEach((m) => m.classList.toggle("is-active", m.dataset.step === n));
+      report();
+    }
+  }, { rootMargin: "-45% 0px -45% 0px" });
+  document.querySelectorAll(".step").forEach((s) => stepObserver.observe(s));
+
+  // Fallback reveals, only when scroll timelines are unavailable (or forced off).
+  if (html.classList.contains("no-timelines")) {
+    const revealObserver = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        // Reveal on entry, and also anything already scrolled past (deep links, fast jumps).
+        if (entry.isIntersecting || entry.boundingClientRect.bottom < 0) {
+          entry.target.classList.add("is-visible");
+          revealObserver.unobserve(entry.target);
+        }
+      }
+    }, { rootMargin: "0px 0px -10% 0px" });
+    document.querySelectorAll(".reveal").forEach((el) => revealObserver.observe(el));
+    html.classList.add("reveal-ready"); // only now may CSS hide unrevealed content
+  }
+
+  // Follow the OS setting if it changes mid-visit.
+  reducedQuery.addEventListener("change", () => {
+    html.classList.toggle("motion-ok", !(forcedReduced || reducedQuery.matches));
+    report();
+  });
+
+  function report() {
+    const path = html.classList.contains("has-timelines") ? "native scroll timelines" : "IntersectionObserver fallback";
+    const motion = html.classList.contains("motion-ok") ? "full" : "reduced";
+    document.getElementById("harness").textContent = `${path} · motion ${motion} · step ${stage.dataset.active}`;
+  }
+  report();
+})();
+</script>
+</body>
+</html>

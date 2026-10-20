@@ -1,0 +1,23 @@
+[
+  { "query": "we're a 9-person architecture practice in porto. our site is a squarespace template from 2018 and says nothing about how we actually work (we mostly convert old warehouses). where do we even start with a site that feels like our buildings?", "should_trigger": true },
+  { "query": "Can you art-direct the launch site for our mechanical keyboard, the Halcyon 65? We have Blender renders and a GLB from our ID team. I want a storyboard before anyone writes code.", "should_trigger": true },
+  { "query": "critique our portfolio site at studio-kiln.com. people say the hero is amazing but everything after it feels like a template. be blunt", "should_trigger": true },
+  { "query": "I need a motion spec for a scroll-driven product story (5 chapters) that our devs can build in GSAP. Include reduced-motion behaviour and what happens on touch.", "should_trigger": true },
+  { "query": "our museum is doing an exhibition microsite about a 15th-century herbal. we'd love visitors to 'turn' the pages somehow. what's the right interaction and can you prototype it?", "should_trigger": true },
+  { "query": "Our agency wants an Awwwards-level redesign. Push us on concept, not just effects. We keep ending up with dark mode + big grotesk + marquee.", "should_trigger": true },
+  { "query": "Plan the WebGL hero for a perfume launch. We have no 3D assets yet. What do we need to commission, what does it cost us in performance, and what's the fallback?", "should_trigger": true },
+  { "query": "here's our jazz festival brief (brief.pdf in the repo). give me 2-3 creative territories with a recommendation, then build the first section in react if we like one", "should_trigger": true },
+  { "query": "The line reveal on our case study titles reads each word separately in VoiceOver, and the lines break wrong after the web font loads. Fix it without changing the look.", "should_trigger": true },
+  { "query": "Review our site before client review: keyboard, reduced motion, what happens if the 3D model fails to load, and whether the Lighthouse numbers we quote are honest.", "should_trigger": true },
+  { "query": "Fix the TypeScript error in src/api/orders.ts: 'Property id does not exist on type never' after I updated zod", "should_trigger": false },
+  { "query": "Add a dark mode toggle to our admin dashboard settings page using the existing Tailwind tokens", "should_trigger": false },
+  { "query": "Write a three.js script that loads model.glb and logs the triangle count for each mesh", "should_trigger": false },
+  { "query": "make a bar chart of Q3 signups by channel from signups.csv", "should_trigger": false },
+  { "query": "Design a logo and business card for my bakery, something warm and hand-drawn", "should_trigger": false },
+  { "query": "Set up ESLint, Prettier and Husky in my Vite + React project", "should_trigger": false },
+  { "query": "Write SEO meta descriptions for our 12 product pages, under 155 characters each", "should_trigger": false },
+  { "query": "Build an Express endpoint for newsletter signup with validation and rate limiting", "should_trigger": false },
+  { "query": "Convert this Figma frame into React components that match our design system tokens", "should_trigger": false },
+  { "query": "Our React Native app's FlatList janks when scrolling a list of product images. How do I fix it?", "should_trigger": false },
+  { "query": "Explain the difference between useEffect and useLayoutEffect with an example", "should_trigger": false }
+]

@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aurel | Fragrance</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  canvas { display: block; }
+  #loader { position: fixed; inset: 0; display: grid; place-items: center; color: #fff; font: 14px sans-serif; background: #000; }
+  .cta { position: fixed; bottom: 8vh; left: 50%; transform: translateX(-50%); color: #fff; border: 1px solid #fff; padding: 14px 28px; border-radius: 30px; font: 14px sans-serif; cursor: pointer; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/" } }
+</script>
+</head>
+<body>
+<div id="loader">Loading 0%</div>
+<div class="cta" onclick="location.href='/shop'">Discover Aurel</div>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+// Loader
+let p = 0;
+const t = setInterval(() => { p += 5; document.getElementById("loader").textContent = `Loading ${p}%`; if (p >= 100) { clearInterval(t); document.getElementById("loader").remove(); } }, 150);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 100);
+camera.position.set(0, 0.5, 4);
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+
+// Title
+const c = document.createElement("canvas"); c.width = 1024; c.height = 256;
+const g = c.getContext("2d"); g.fillStyle = "#fff"; g.font = "bold 160px serif"; g.textAlign = "center"; g.fillText("AUREL", 512, 180);
+const title = new THREE.Mesh(new THREE.PlaneGeometry(3, 0.75), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true }));
+title.position.y = 1.2;
+scene.add(title);
+
+new GLTFLoader().load("models/bottle.glb", (gltf) => scene.add(gltf.scene), undefined, (err) => console.error(err));
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.autoRotate = true;
+controls.autoRotateSpeed = 4;
+
+addEventListener("resize", () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+</script>
+</body>
+</html>

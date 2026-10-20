@@ -1,0 +1,30 @@
+{
+  "$comment": "Example budgets for the fictional orrery project in examples/worked-orrery-maker.md. Values are that project's planning targets, not universal limits. Derive your own from target devices, network and content, and record the reason for each one.",
+  "entry": "index.html",
+  "compression": "brotli",
+  "budgets": {
+    "criticalRoute": 160000,
+    "initialJs": 90000,
+    "initialCss": 25000,
+    "fonts": 140000,
+    "largestImage": 220000,
+    "models3d": 4000000
+  },
+  "patternBudgets": [
+    {
+      "name": "3D chunk",
+      "pattern": "assets/scene-*.js",
+      "followImports": true,
+      "max": 200000,
+      "rationale": "three.js plus scene code, loaded after LCP by dynamic import"
+    }
+  ],
+  "rationale": {
+    "criticalRoute": "Narrative and enquiry form readable before any 3D arrives",
+    "initialJs": "Narrative, controls and form only. 3D is a lazy chunk.",
+    "initialCss": "One stylesheet, tokens and layout",
+    "fonts": "Two families, Latin subset, WOFF2",
+    "largestImage": "Macro photograph hero at 1440 w, AVIF",
+    "models3d": "Medium-tier GLB (Meshopt) plus KTX2 textures, about a 4 MB transfer"
+  }
+}

@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Works: shared-element example</title>
+<!--
+  creative-web-direction · technical example · shared-element route transition
+
+  Demonstrates
+  - Real links and real URLs first. Without JavaScript every work is an ordinary section
+    below the index, and the links jump to it.
+  - With JavaScript: an index → detail "route" (hash URLs, so it works from any static
+    host) with the card image continuing into the detail hero.
+  - View Transitions API where available (one shared view-transition-name, assigned
+    only for the duration of the transition). Otherwise a FLIP fallback with the Web
+    Animations API.
+  - History: back and forward work, refresh and deep links open the right view, and the
+    index scroll position is restored on back.
+  - Focus: moves to the detail heading on open and returns to the originating card on
+    close. document.title updates per view.
+  - Interruption: a new navigation skips or finishes the running transition first.
+  - Reduced motion: no transition. The view changes instantly.
+
+  Limits
+  - The FLIP fallback scales the media non-uniformly. That is fine for flat colour panels.
+    For photographs, animate a clipping wrapper instead, to avoid visible distortion.
+  - Hash routing keeps the example host-agnostic. In a framework, use its router and
+    verify its current view-transition integration.
+
+  Test hooks: ?flip=1 forces the FLIP fallback. ?reduced=1 forces reduced motion.
+  The panel at the bottom right shows the method used for the last transition.
+-->
+<style>
+  :root {
+    --ink: #17150f;
+    --paper: #f5f2ea;
+    --muted: #57524a;
+    --line: #d4ccbc;
+    --focus: #1f4fbf;
+    --ease-move: cubic-bezier(.2,.7,.1,1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1.0625rem/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  a { color: inherit; }
+  a:focus-visible, [tabindex="-1"]:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+  [tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
+  header, main { max-width: 72rem; margin: 0 auto; padding: 0 1.25rem; }
+  header { padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: baseline; }
+  .brand { font-weight: 700; letter-spacing: .02em; }
+  h1 { font-size: clamp(2.2rem, 1.4rem + 3vw, 4rem); line-height: 1.05; margin: 3rem 0 2rem; }
+  h2 { font-size: clamp(1.9rem, 1.2rem + 2.6vw, 3.4rem); line-height: 1.05; margin: 1.5rem 0 1rem; }
+  p { max-width: 60ch; color: var(--muted); }
+
+  .grid { list-style: none; margin: 0 0 4rem; padding: 0; display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr)); }
+  .card { display: block; text-decoration: none; }
+  .card-media, .detail-media { display: block; background: linear-gradient(160deg, hsl(var(--hue) 45% 58%), hsl(calc(var(--hue) + 40) 40% 28%)); border-radius: .5rem; }
+  .card-media { aspect-ratio: 4 / 5; }
+  .card-title { display: block; margin-top: .6rem; font-weight: 600; }
+  .card:hover .card-title { text-decoration: underline; text-underline-offset: .2em; }
+
+  .detail { padding: 2rem 0 6rem; border-top: 1px solid var(--line); }
+  .detail-media { aspect-ratio: 16 / 9; width: 100%; }
+  .back { display: inline-block; margin-bottom: 1rem; font-weight: 600; }
+
+  /* With JavaScript, one view at a time. */
+  .js .detail:not(.is-active) { display: none; }
+  .js.route-detail #index { display: none; }
+  .js .detail { border-top: 0; }
+
+  /* View Transitions: only the shared media gets a bespoke animation. */
+  ::view-transition-group(work-media) { animation-duration: 420ms; animation-timing-function: var(--ease-move); }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 220ms; }
+
+  .harness { position: fixed; right: .75rem; bottom: .75rem; background: #fff; border: 1px solid var(--line); border-radius: .5rem; padding: .5rem .75rem; font: 500 .78rem/1.45 ui-monospace, Consolas, monospace; max-width: calc(100vw - 1.5rem); }
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">Studio Index</span>
+  <span>Technical example</span>
+</header>
+<main id="main">
+  <section id="index" aria-labelledby="index-title">
+    <h1 id="index-title">Works</h1>
+    <ul class="grid">
+      <li><a class="card" href="#work-1"><span class="card-media" style="--hue: 18"></span><span class="card-title">Harbour Lights</span></a></li>
+      <li><a class="card" href="#work-2"><span class="card-media" style="--hue: 155"></span><span class="card-title">Salt Archive</span></a></li>
+      <li><a class="card" href="#work-3"><span class="card-media" style="--hue: 220"></span><span class="card-title">Night Ferry</span></a></li>
+      <li><a class="card" href="#work-4"><span class="card-media" style="--hue: 285"></span><span class="card-title">Paper Weather</span></a></li>
+    </ul>
+  </section>
+
+  <article id="work-1" class="detail" aria-labelledby="work-1-title">
+    <a class="back" href="#index">← All works</a>
+    <span class="detail-media" style="--hue: 18"></span>
+    <h2 id="work-1-title" tabindex="-1">Harbour Lights</h2>
+    <p>A wayfinding system for a working harbour, drawn from the colours of navigation lights. The image you selected continues into this page, so you never lose your place.</p>
+  </article>
+  <article id="work-2" class="detail" aria-labelledby="work-2-title">
+    <a class="back" href="#index">← All works</a>
+    <span class="detail-media" style="--hue: 155"></span>
+    <h2 id="work-2-title" tabindex="-1">Salt Archive</h2>
+    <p>An online collection for a salt-works museum, organised by the tide tables the workers kept.</p>
+  </article>
+  <article id="work-3" class="detail" aria-labelledby="work-3-title">
+    <a class="back" href="#index">← All works</a>
+    <span class="detail-media" style="--hue: 220"></span>
+    <h2 id="work-3-title" tabindex="-1">Night Ferry</h2>
+    <p>A timetable that reads like a journey: departures set as a single continuous line across the night.</p>
+  </article>
+  <article id="work-4" class="detail" aria-labelledby="work-4-title">
+    <a class="back" href="#index">← All works</a>
+    <span class="detail-media" style="--hue: 285"></span>
+    <h2 id="work-4-title" tabindex="-1">Paper Weather</h2>
+    <p>A forecast printed daily on a single sheet, and its web edition that keeps the fold.</p>
+  </article>
+</main>
+
+<aside class="harness" aria-label="Test harness"><strong>Harness</strong> <span id="harness">no transition yet</span></aside>
+
+<script>
+(() => {
+  "use strict";
+  const html = document.documentElement;
+  html.classList.add("js");
+
+  const params = new URLSearchParams(location.search);
+  const reducedQuery = matchMedia("(prefers-reduced-motion: reduce)");
+  const isReduced = () => params.get("reduced") === "1" || reducedQuery.matches;
+  const canViewTransition = () => typeof document.startViewTransition === "function" && params.get("flip") !== "1";
+  const EASE = "cubic-bezier(.2,.7,.1,1)";
+  const BASE_TITLE = document.title;
+
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+
+  const details = [...document.querySelectorAll(".detail")];
+  let current = null;       // "index" or a detail id
+  let running = null;       // active ViewTransition
+  let flipAnims = [];       // active FLIP animations
+
+  const routeFrom = (hash) => {
+    const id = (hash || "").replace(/^#/, "");
+    return details.some((d) => d.id === id) ? id : "index";
+  };
+
+  // History writes can fail in sandboxed or opaque-origin documents. Never let that
+  // break navigation: fall back to plain hash assignment.
+  function safePush(state, hash) {
+    try { history.pushState(state, "", hash); return true; } catch { location.hash = hash; return false; }
+  }
+  function safeReplace(state) { try { history.replaceState(state, ""); } catch { /* ignore */ } }
+
+  function render(route) {
+    details.forEach((d) => d.classList.toggle("is-active", d.id === route));
+    html.classList.toggle("route-detail", route !== "index");
+    const title = route === "index" ? null : document.getElementById(`${route}-title`).textContent;
+    document.title = title ? `${title} | ${BASE_TITLE}` : BASE_TITLE;
+    current = route;
+  }
+
+  function focusFor(route, from) {
+    if (route === "index") document.querySelector(`.card[href="#${from}"]`)?.focus({ preventScroll: true });
+    else document.getElementById(`${route}-title`)?.focus({ preventScroll: true });
+  }
+
+  function report(method) { document.getElementById("harness").textContent = `last: ${method} · view: ${current}`; }
+
+  let pending = null;       // route currently being navigated to (dedupes popstate + hashchange)
+
+  async function go(route, { restoreY = 0 } = {}) {
+    const from = current;
+    if (route === from || route === pending) return;
+    pending = route;
+    try { await transitionTo(route, from, restoreY); } finally { if (pending === route) pending = null; }
+  }
+
+  async function transitionTo(route, from, restoreY) {
+
+    // Finish anything in flight so states never stack.
+    if (running) { running.skipTransition(); running = null; }
+    flipAnims.forEach((a) => a.finish());
+    flipAnims = [];
+
+    const workId = route === "index" ? from : route;
+    const cardMedia = document.querySelector(`.card[href="#${workId}"] .card-media`);
+    const detailMedia = document.querySelector(`#${workId} .detail-media`);
+    const [oldEl, newEl] = route === "index" ? [detailMedia, cardMedia] : [cardMedia, detailMedia];
+
+    const update = () => {
+      render(route);
+      window.scrollTo(0, route === "index" ? restoreY : 0);
+    };
+
+    if (isReduced() || !oldEl || !newEl || from === null) {
+      update(); focusFor(route, from); report(isReduced() ? "none (reduced motion)" : "none");
+      return;
+    }
+
+    if (canViewTransition()) {
+      oldEl.style.viewTransitionName = "work-media";
+      const transition = document.startViewTransition(() => {
+        oldEl.style.viewTransitionName = "";
+        update();
+        newEl.style.viewTransitionName = "work-media";
+      });
+      running = transition;
+      report("View Transitions API");
+      try {
+        await transition.updateCallbackDone;
+        focusFor(route, from);
+        await transition.finished;
+      } catch { /* skipped or aborted: the DOM update has still been applied */ }
+      finally {
+        oldEl.style.viewTransitionName = "";
+        newEl.style.viewTransitionName = "";
+        if (running === transition) running = null;
+      }
+      return;
+    }
+
+    // FLIP fallback: First, (apply) Last, Invert, Play.
+    const first = oldEl.getBoundingClientRect();
+    update();
+    const last = newEl.getBoundingClientRect();
+    const dx = first.left - last.left;
+    const dy = first.top - last.top;
+    const sx = first.width / last.width;
+    const sy = first.height / last.height;
+    flipAnims.push(newEl.animate(
+      [{ transformOrigin: "0 0", transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
+       { transformOrigin: "0 0", transform: "none" }],
+      { duration: 420, easing: EASE }
+    ));
+    // Fade in the rest of the new view, but not the shared element itself.
+    const fadeTargets = route === "index"
+      ? [document.getElementById("index-title"),
+         ...[...document.querySelectorAll(".card")].filter((card) => !card.contains(newEl)),
+         newEl.closest(".card").querySelector(".card-title")]
+      : [...document.getElementById(route).querySelectorAll("h2, p, .back")];
+    fadeTargets.forEach((el) => flipAnims.push(el.animate(
+      [{ opacity: 0 }, { opacity: 1 }], { duration: 260, delay: 120, easing: "ease-out", fill: "backwards" })));
+    focusFor(route, from);
+    report("FLIP fallback (Web Animations API)");
+  }
+
+  // Intercept same-document route links. Modified clicks keep their native behaviour.
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest('a[href^="#"]');
+    if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const hash = link.getAttribute("href");
+    const route = routeFrom(hash);
+    if (hash !== "#index" && route === "index") return; // not a route: leave native anchor behaviour
+    event.preventDefault();
+    if (route === current) return;
+
+    // When a history write is refused, safePush assigns location.hash instead and the
+    // hashchange listener performs the navigation.
+    if (route !== "index") {
+      safeReplace({ route: current, scrollY: window.scrollY }); // remember where the index was
+      if (safePush({ route, fromIndex: current === "index" }, `#${route}`)) go(route);
+    } else if (history.state && history.state.fromIndex) {
+      history.back(); // popstate restores the index and its scroll position
+    } else if (safePush({ route: "index" }, "#index")) {
+      go("index");
+    }
+  });
+
+  window.addEventListener("popstate", (event) => {
+    const route = (event.state && event.state.route) || routeFrom(location.hash);
+    go(route, { restoreY: (event.state && event.state.scrollY) || 0 });
+  });
+
+  // Hash fallback path (when history writes were refused).
+  window.addEventListener("hashchange", () => { const r = routeFrom(location.hash); if (r !== current) go(r); });
+
+  // Initial view: honour deep links and refreshes, with no transition.
+  const initial = routeFrom(location.hash);
+  safeReplace({ route: initial, scrollY: 0 });
+  render(initial);
+  report("initial render");
+  window.__sharedElement = { get current() { return current; } }; // for automated checks
+})();
+</script>
+</body>
+</html>
